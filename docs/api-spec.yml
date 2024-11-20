@@ -1,0 +1,147 @@
+openapi: 3.0.0
+info:
+  title: FXQL Statement Parser API
+  description: API documentation for the Foreign Exchange Query Language Parser
+  version: 1.0.0
+  contact:
+    name: Mira Support
+    email: developer@usemira.com.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://fxql-parser.usemira.com
+    description: Production server
+
+tags:
+  - name: fxql
+    description: FXQL statement operations
+
+paths:
+  /fxql-statements:
+    post:
+      tags:
+        - fxql
+      summary: Parse FXQL statement
+      description: Parse and store FXQL statements for currency exchange rates
+      operationId: parseFxql
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                FXQL:
+                  type: string
+                  example: |
+                    USD-GBP {
+                      BUY 0.85
+                      SELL 0.90
+                      CAP 10000
+                    }
+              required:
+                - FXQL
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: FXQL Statement Parsed Successfully.
+                  code:
+                    type: string
+                    example: FXQL-200
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FxRate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    FxRate:
+      type: object
+      properties:
+        EntryId:
+          type: integer
+          example: 1
+        SourceCurrency:
+          type: string
+          example: USD
+        DestinationCurrency:
+          type: string
+          example: GBP
+        SellPrice:
+          type: number
+          format: float
+          example: 0.90
+        BuyPrice:
+          type: number
+          format: float
+          example: 0.85
+        CapAmount:
+          type: integer
+          example: 10000
+      required:
+        - EntryId
+        - SourceCurrency
+        - DestinationCurrency
+        - SellPrice
+        - BuyPrice
+        - CapAmount
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Invalid FXQL syntax at line 2
+              code:
+                type: string
+                example: FXQL-400
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Rate limit exceeded
+              code:
+                type: string
+                example: FXQL-429
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Internal server error
+              code:
+                type: string
+                example: FXQL-500
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
