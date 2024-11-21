@@ -9,14 +9,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: Error | FxqlError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    
+
     let errorResponse: IErrorResponse;
 
     if (exception instanceof FxqlError) {
       errorResponse = {
         message: exception.message,
         code: exception.code,
-        ...(exception.position && { position: exception.position })
+        ...(exception.position && { position: exception.position }),
       };
       response.status(400).json(errorResponse);
       return;
@@ -24,7 +24,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     errorResponse = {
       message: 'Internal server error',
-      code: ERROR_CODES.SERVER_ERROR
+      code: ERROR_CODES.SERVER_ERROR,
     };
     response.status(500).json(errorResponse);
   }

@@ -12,7 +12,7 @@ export class CustomLogger implements LoggerService {
           format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.ms(),
-            nestWinstonModuleUtilities.format.nestLike()
+            nestWinstonModuleUtilities.format.nestLike(),
           ),
         }),
         new winston.transports.File({
@@ -20,7 +20,7 @@ export class CustomLogger implements LoggerService {
           level: 'error',
           format: winston.format.combine(
             winston.format.timestamp(),
-            winston.format.json()
+            winston.format.json(),
           ),
         }),
       ],

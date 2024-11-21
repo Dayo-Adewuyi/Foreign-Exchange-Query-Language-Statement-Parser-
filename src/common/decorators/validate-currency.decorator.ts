@@ -1,4 +1,9 @@
-import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 import { VALID_CURRENCIES } from '../constants/currency.constants';
 
 @ValidatorConstraint({ name: 'isCurrency', async: false })

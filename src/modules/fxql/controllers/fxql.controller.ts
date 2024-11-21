@@ -1,4 +1,10 @@
-import { Controller, Post, Body, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FxqlParserService } from '../services/fxql-parser.service';
 import { CreateFxqlDto } from '../../../core/dtos/create-fxql.dto';

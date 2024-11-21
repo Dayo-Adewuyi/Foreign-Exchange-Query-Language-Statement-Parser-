@@ -14,14 +14,14 @@ export class ValidationUtil {
   static async validateDTO<T extends object>(
     dto: ClassConstructor<T>,
     plain: Record<string, any>,
-    options: ValidatorOptions = ValidationUtil.defaultValidatorOptions
+    options: ValidatorOptions = ValidationUtil.defaultValidatorOptions,
   ): Promise<[T, string[]]> {
     const instance = plainToClass(dto, plain);
     const errors = await validate(instance, options);
 
     if (errors.length > 0) {
-      const messages = errors.map(error => 
-        Object.values(error.constraints || {}).join(', ')
+      const messages = errors.map((error) =>
+        Object.values(error.constraints || {}).join(', '),
       );
       return [instance, messages];
     }
@@ -37,7 +37,10 @@ export class ValidationUtil {
     return !isNaN(num) && isFinite(num) && num >= 0;
   }
 
-  static isValidCurrencyPair(sourceCurrency: string, destinationCurrency: string): boolean {
+  static isValidCurrencyPair(
+    sourceCurrency: string,
+    destinationCurrency: string,
+  ): boolean {
     const currencyRegex = /^[A-Z]{3}$/;
     return (
       currencyRegex.test(sourceCurrency) &&

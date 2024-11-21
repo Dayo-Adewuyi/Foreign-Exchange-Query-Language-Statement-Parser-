@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FxqlValidatorService } from '../../src/modules/fxql/services/fxql-validator.service';
-import { InvalidCurrencyError, InvalidAmountError, InvalidCapError } from '../../src/core/errors/fxql-errors';
+import {
+  InvalidCurrencyError,
+  InvalidAmountError,
+  InvalidCapError,
+} from '../../src/core/errors/fxql-errors';
 
 describe('FxqlValidatorService Unit Test', () => {
   let service: FxqlValidatorService;
@@ -15,18 +19,21 @@ describe('FxqlValidatorService Unit Test', () => {
 
   describe('validateCurrencyPair', () => {
     it('validates correct currency pairs', async () => {
-      await expect(service.validateCurrencyPair('USD', 'GBP', 1, 1))
-        .resolves.not.toThrow();
+      await expect(
+        service.validateCurrencyPair('USD', 'GBP', 1, 1),
+      ).resolves.not.toThrow();
     });
 
     it('throws on invalid currency case', async () => {
-      await expect(service.validateCurrencyPair('usd', 'GBP', 1, 1))
-        .rejects.toThrow(/Invalid currency case/);
+      await expect(
+        service.validateCurrencyPair('usd', 'GBP', 1, 1),
+      ).rejects.toThrow(/Invalid currency case/);
     });
 
     it('throws on invalid currency code', async () => {
-      await expect(service.validateCurrencyPair('XYZ', 'GBP', 1, 1))
-        .rejects.toThrow(InvalidCurrencyError);
+      await expect(
+        service.validateCurrencyPair('XYZ', 'GBP', 1, 1),
+      ).rejects.toThrow(InvalidCurrencyError);
     });
   });
 

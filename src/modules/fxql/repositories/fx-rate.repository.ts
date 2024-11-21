@@ -12,18 +12,18 @@ export class FxRateRepository extends Repository<FxRateEntity> {
 
   async bulkCreate(rates: IFxRate[]): Promise<IFxRate[]> {
     const latestRates = new Map<string, IFxRate>();
-    
+
     rates.forEach((rate, index) => {
       const key = `${rate.SourceCurrency}-${rate.DestinationCurrency}`;
       latestRates.set(key, {
         ...rate,
-        EntryId: index + 1  
+        EntryId: index + 1,
       });
     });
 
     const results: IFxRate[] = [];
-    
-    await this.dataSource.transaction(async manager => {
+
+    await this.dataSource.transaction(async (manager) => {
       for (const rate of latestRates.values()) {
         const existingRate = await manager.findOne(FxRateEntity, {
           where: {
@@ -51,7 +51,7 @@ export class FxRateRepository extends Repository<FxRateEntity> {
         }
 
         const freshEntity = await manager.findOne(FxRateEntity, {
-          where: { id: savedEntity.id }
+          where: { id: savedEntity.id },
         });
 
         if (!freshEntity) {
@@ -59,7 +59,7 @@ export class FxRateRepository extends Repository<FxRateEntity> {
         }
 
         results.push({
-          EntryId: rate.EntryId,  
+          EntryId: rate.EntryId,
           SourceCurrency: freshEntity.sourceCurrency,
           DestinationCurrency: freshEntity.destinationCurrency,
           BuyPrice: parseFloat(freshEntity.buyPrice.toString()),

@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { FxRateRepository } from '../repositories/fx-rate.repository';
 import { FxqlValidatorService } from './fxql-validator.service';
 import { IFxRate } from '../../../core/domain/interfaces/fx-rate.interface';
-import { InvalidSyntaxError , InvalidCurrencyError} from '../../../core/errors/fxql-errors';
+import {
+  InvalidSyntaxError,
+  InvalidCurrencyError,
+} from '../../../core/errors/fxql-errors';
 import { FXQL_REGEX } from '../../../common/constants/currency.constants';
 
 @Injectable()
 export class FxqlParserService {
-    private readonly MAX_PAIRS = 1000;
+  private readonly MAX_PAIRS = 1000;
 
   constructor(
     private readonly fxRateRepository: FxRateRepository,
@@ -22,16 +25,15 @@ export class FxqlParserService {
 
     const statements = this.splitStatements(cleanedFxql);
     if (statements.length > this.MAX_PAIRS) {
-        throw new InvalidSyntaxError(
-          `Request exceeds maximum limit of ${this.MAX_PAIRS} currency pairs`,
-          1,
-          1
-        );
-      } else if (statements.length === 0) {
-        throw new InvalidSyntaxError('No FXQL statements found', 1, 1);
-      }
+      throw new InvalidSyntaxError(
+        `Request exceeds maximum limit of ${this.MAX_PAIRS} currency pairs`,
+        1,
+        1,
+      );
+    } else if (statements.length === 0) {
+      throw new InvalidSyntaxError('No FXQL statements found', 1, 1);
+    }
 
-      
     const parsedRates: IFxRate[] = [];
 
     for (const [index, statement] of statements.entries()) {
@@ -41,8 +43,8 @@ export class FxqlParserService {
       } catch (error) {
         if (error instanceof InvalidSyntaxError) {
           throw new InvalidSyntaxError(
-            `${error.message} at statement ${index + 1}`, 
-            index + 1
+            `${error.message} at statement ${index + 1}`,
+            index + 1,
           );
         }
         throw error;
@@ -55,44 +57,46 @@ export class FxqlParserService {
   private splitStatements(fxqlString: string): string[] {
     return fxqlString
       .split(/}\s*\n\s*\n/)
-      .map(stmt => stmt.trim())
+      .map((stmt) => stmt.trim())
       .filter(Boolean)
-      .map(stmt => stmt.endsWith('}') ? stmt : `${stmt}}`);
+      .map((stmt) => (stmt.endsWith('}') ? stmt : `${stmt}}`));
   }
 
-  private async parseStatement(statement: string, lineNumber: number): Promise<IFxRate> {
+  private async parseStatement(
+    statement: string,
+    lineNumber: number,
+  ): Promise<IFxRate> {
     const lines = statement
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line !== '');  
-    
-      
+      .map((line) => line.trim())
+      .filter((line) => line !== '');
+
     const firstLine = lines[0];
     const currencyPairMatch = FXQL_REGEX.CURRENCY_PAIR.exec(firstLine);
 
     if (!currencyPairMatch) {
-        throw new InvalidCurrencyError(
-          `Invalid currency pair format: "${firstLine}"`,
-          lineNumber,
-          1
-        );
-      }
-    
-      const [, sourceCurrency, destinationCurrency] = currencyPairMatch;
-      await this.validatorService.validateCurrencyPair(
-        sourceCurrency, 
-        destinationCurrency,
+      throw new InvalidCurrencyError(
+        `Invalid currency pair format: "${firstLine}"`,
         lineNumber,
-        firstLine.indexOf(sourceCurrency)
+        1,
       );
+    }
 
-      if (!firstLine.match(/[A-Z]{3}-[A-Z]{3}\s+{/)) {
-        throw new InvalidSyntaxError(
-          `Missing single space after currency pair ${sourceCurrency}-${destinationCurrency}`,
-          lineNumber,
-          firstLine.indexOf('{')
-        );
-      }
+    const [, sourceCurrency, destinationCurrency] = currencyPairMatch;
+    await this.validatorService.validateCurrencyPair(
+      sourceCurrency,
+      destinationCurrency,
+      lineNumber,
+      firstLine.indexOf(sourceCurrency),
+    );
+
+    if (!firstLine.match(/[A-Z]{3}-[A-Z]{3}\s+{/)) {
+      throw new InvalidSyntaxError(
+        `Missing single space after currency pair ${sourceCurrency}-${destinationCurrency}`,
+        lineNumber,
+        firstLine.indexOf('{'),
+      );
+    }
 
     const rate: Partial<IFxRate> = {
       SourceCurrency: sourceCurrency,
@@ -101,8 +105,8 @@ export class FxqlParserService {
 
     const contentLines = lines
       .slice(1)
-      .map(line => line.replace(/}$/, '').trim())
-      .filter(line => line !== '');
+      .map((line) => line.replace(/}$/, '').trim())
+      .filter((line) => line !== '');
 
     await this.processLines(contentLines, rate, lineNumber);
 
@@ -114,37 +118,57 @@ export class FxqlParserService {
     if (missingFields.length > 0) {
       throw new InvalidSyntaxError(
         `Missing required fields: ${missingFields.join(', ')}`,
-        lineNumber
+        lineNumber,
       );
     }
 
     return rate as IFxRate;
   }
 
-  private async processLines(lines: string[], rate: Partial<IFxRate>, lineNumber: number): Promise<void> {
-   
+  private async processLines(
+    lines: string[],
+    rate: Partial<IFxRate>,
+    lineNumber: number,
+  ): Promise<void> {
     for (const [index, line] of lines.entries()) {
       const trimmedLine = line.trim();
       if (!trimmedLine) continue;
 
       try {
         if (FXQL_REGEX.BUY.test(trimmedLine)) {
-            const match = FXQL_REGEX.BUY.exec(trimmedLine);
-            await this.processBuySellLine('BUY', match[1], rate, lineNumber + index + 1, line.indexOf(match[1]));
-          } else if (FXQL_REGEX.SELL.test(trimmedLine)) {
-            const match = FXQL_REGEX.SELL.exec(trimmedLine);
-            await this.processBuySellLine('SELL', match[1], rate, lineNumber + index + 1, line.indexOf(match[1]));
-          } else if (FXQL_REGEX.CAP.test(trimmedLine)) {
-            const match = FXQL_REGEX.CAP.exec(trimmedLine);
-            await this.processCapLine(match[1], rate, lineNumber + index + 1, line.indexOf(match[1]));
-          }else {
+          const match = FXQL_REGEX.BUY.exec(trimmedLine);
+          await this.processBuySellLine(
+            'BUY',
+            match[1],
+            rate,
+            lineNumber + index + 1,
+            line.indexOf(match[1]),
+          );
+        } else if (FXQL_REGEX.SELL.test(trimmedLine)) {
+          const match = FXQL_REGEX.SELL.exec(trimmedLine);
+          await this.processBuySellLine(
+            'SELL',
+            match[1],
+            rate,
+            lineNumber + index + 1,
+            line.indexOf(match[1]),
+          );
+        } else if (FXQL_REGEX.CAP.test(trimmedLine)) {
+          const match = FXQL_REGEX.CAP.exec(trimmedLine);
+          await this.processCapLine(
+            match[1],
+            rate,
+            lineNumber + index + 1,
+            line.indexOf(match[1]),
+          );
+        } else {
           throw new InvalidSyntaxError(
             `Invalid line format: "${trimmedLine}"`,
-            lineNumber + index + 1
+            lineNumber + index + 1,
           );
         }
       } catch (error) {
-        throw error 
+        throw error;
       }
     }
   }
@@ -154,7 +178,7 @@ export class FxqlParserService {
     amount: string,
     rate: Partial<IFxRate>,
     line: number,
-    column: number
+    column: number,
   ): Promise<void> {
     const value = parseFloat(amount);
     await this.validatorService.validateAmount(value, amount, line, column);
@@ -170,7 +194,7 @@ export class FxqlParserService {
     amount: string,
     rate: Partial<IFxRate>,
     line: number,
-    column: number
+    column: number,
   ): Promise<void> {
     const value = parseInt(amount, 10);
     await this.validatorService.validateCap(value, line, column);

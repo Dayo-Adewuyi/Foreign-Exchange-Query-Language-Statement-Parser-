@@ -7,7 +7,7 @@ export class FxqlError extends Error {
     public readonly position?: {
       line: number;
       column: number;
-    }
+    },
   ) {
     super(message);
     this.name = 'FxqlError';
@@ -17,9 +17,9 @@ export class FxqlError extends Error {
 export class InvalidSyntaxError extends FxqlError {
   constructor(message: string, line?: number, column?: number) {
     super(
-      message, 
+      message,
       ERROR_CODES.INVALID_SYNTAX,
-      line && column ? { line, column } : undefined
+      line && column ? { line, column } : undefined,
     );
   }
 }
@@ -27,9 +27,9 @@ export class InvalidSyntaxError extends FxqlError {
 export class InvalidCurrencyError extends FxqlError {
   constructor(message: string, line?: number, column?: number) {
     super(
-      message, 
+      message,
       ERROR_CODES.INVALID_CURRENCY,
-      line && column ? { line, column } : undefined
+      line && column ? { line, column } : undefined,
     );
   }
 }
@@ -37,9 +37,9 @@ export class InvalidCurrencyError extends FxqlError {
 export class InvalidAmountError extends FxqlError {
   constructor(message: string, line?: number, column?: number) {
     super(
-      message, 
+      message,
       ERROR_CODES.INVALID_AMOUNT,
-      line && column ? { line, column } : undefined
+      line && column ? { line, column } : undefined,
     );
   }
 }
@@ -47,9 +47,9 @@ export class InvalidAmountError extends FxqlError {
 export class InvalidCapError extends FxqlError {
   constructor(message: string, line?: number, column?: number) {
     super(
-      message, 
+      message,
       ERROR_CODES.INVALID_CAP,
-      line && column ? { line, column } : undefined
+      line && column ? { line, column } : undefined,
     );
   }
 }

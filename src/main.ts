@@ -8,26 +8,20 @@ import { setupSwagger } from './config/swagger/swagger.config';
 import { CustomLogger } from './utils/logger.util';
 
 async function bootstrap() {
- 
   const logger = new CustomLogger();
 
-  
   const app = await NestFactory.create(AppModule, {
     logger,
     cors: true,
   });
 
- 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port');
-
 
   app.use(helmet());
   app.use(compression());
 
- 
-    setupSwagger(app);
-  
+  setupSwagger(app);
 
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);

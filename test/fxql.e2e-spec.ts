@@ -14,7 +14,7 @@ describe('FxqlController (e2e)', () => {
   let dataSource: DataSource;
 
   process.env.NODE_ENV = 'test';
-  
+
   const testConfig = {
     database: {
       type: 'postgres' as const,
@@ -26,14 +26,16 @@ describe('FxqlController (e2e)', () => {
       entities: [FxRateEntity],
       synchronize: true,
       logging: false,
-      ssl: process.env.DB_SSL_ENABLED === 'true' ? {
-        rejectUnauthorized: false
-      } : false
-    }
+      ssl:
+        process.env.DB_SSL_ENABLED === 'true'
+          ? {
+              rejectUnauthorized: false,
+            }
+          : false,
+    },
   };
 
   beforeAll(async () => {
-  
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -42,13 +44,18 @@ describe('FxqlController (e2e)', () => {
         }),
         TypeOrmModule.forRootAsync({
           imports: [ConfigModule],
-          useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
+          useFactory: async (
+            configService: ConfigService,
+          ): Promise<TypeOrmModuleOptions> => ({
             ...testConfig.database,
             // Override with environment variables if provided
             host: process.env.TEST_DB_HOST || testConfig.database.host,
-            port: parseInt(process.env.TEST_DB_PORT) || testConfig.database.port,
-            username: process.env.TEST_DB_USERNAME || testConfig.database.username,
-            password: process.env.TEST_DB_PASSWORD || testConfig.database.password,
+            port:
+              parseInt(process.env.TEST_DB_PORT) || testConfig.database.port,
+            username:
+              process.env.TEST_DB_USERNAME || testConfig.database.username,
+            password:
+              process.env.TEST_DB_PASSWORD || testConfig.database.password,
             database: process.env.TEST_DB_NAME || testConfig.database.database,
           }),
           inject: [ConfigService],
@@ -59,13 +66,15 @@ describe('FxqlController (e2e)', () => {
 
     // Create the app
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ 
-      transform: true,
-      whitelist: true 
-    }));
-    
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+      }),
+    );
+
     await app.init();
-    
+
     // Get the DataSource
     dataSource = moduleFixture.get<DataSource>(DataSource);
 
@@ -108,9 +117,9 @@ describe('FxqlController (e2e)', () => {
       throw error;
     }
   });
-    describe('/fxql-statements (POST)', () => {
-      it('should create new fx rates', async () => {
-        const fxql = `
+  describe('/fxql-statements (POST)', () => {
+    it('should create new fx rates', async () => {
+      const fxql = `
           USD-EUR {
             BUY 0.85
             SELL 0.90
@@ -124,42 +133,40 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        const response = await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: fxql })
-          .expect(201);
+      const response = await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: fxql })
+        .expect(201);
 
-        expect(response.body.data).toHaveLength(2);
-        expect(response.body.data).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              SourceCurrency: 'USD',
-              DestinationCurrency: 'EUR',
-              BuyPrice: 0.85,
-              SellPrice: 0.90,
-              CapAmount: 10000
-            }),
-            expect.objectContaining({
-              SourceCurrency: 'GBP',
-              DestinationCurrency: 'JPY',
-              BuyPrice: 180.50,
-              SellPrice: 185.00,
-              CapAmount: 20000
-            })
-          ])
-        );
+      expect(response.body.data).toHaveLength(2);
+      expect(response.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            SourceCurrency: 'USD',
+            DestinationCurrency: 'EUR',
+            BuyPrice: 0.85,
+            SellPrice: 0.9,
+            CapAmount: 10000,
+          }),
+          expect.objectContaining({
+            SourceCurrency: 'GBP',
+            DestinationCurrency: 'JPY',
+            BuyPrice: 180.5,
+            SellPrice: 185.0,
+            CapAmount: 20000,
+          }),
+        ]),
+      );
 
-        // Verify database state
-        const rates = await dataSource
-          .getRepository(FxRateEntity)
-          .find();
-        
-        expect(rates).toHaveLength(2);
-      });
+      // Verify database state
+      const rates = await dataSource.getRepository(FxRateEntity).find();
 
-      it('should update existing fx rates', async () => {
-        // First create an initial rate
-        const initialFxql = `
+      expect(rates).toHaveLength(2);
+    });
+
+    it('should update existing fx rates', async () => {
+      // First create an initial rate
+      const initialFxql = `
           USD-EUR {
             BUY 0.85
             SELL 0.90
@@ -167,13 +174,13 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: initialFxql })
-          .expect(201);
+      await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: initialFxql })
+        .expect(201);
 
-        // Now update it
-        const updateFxql = `
+      // Now update it
+      const updateFxql = `
           USD-EUR {
             BUY 0.87
             SELL 0.92
@@ -181,63 +188,61 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        const response = await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: updateFxql })
-          .expect(201);
+      const response = await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: updateFxql })
+        .expect(201);
 
-        expect(response.body.data).toHaveLength(1);
-        expect(response.body.data[0]).toMatchObject({
-          SourceCurrency: 'USD',
-          DestinationCurrency: 'EUR',
-          BuyPrice: 0.87,
-          SellPrice: 0.92,
-          CapAmount: 12000
-        });
-
-        // Verify only one record exists
-        const rates = await dataSource
-          .getRepository(FxRateEntity)
-          .find();
-        
-        expect(rates).toHaveLength(1);
-        expect(rates[0]).toMatchObject({
-          buyPrice: 0.87,
-          sellPrice: 0.92,
-          capAmount: 12000
-        });
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0]).toMatchObject({
+        SourceCurrency: 'USD',
+        DestinationCurrency: 'EUR',
+        BuyPrice: 0.87,
+        SellPrice: 0.92,
+        CapAmount: 12000,
       });
 
-      it('should handle validation errors', async () => {
-        // Missing FXQL field
-        await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({})
-          .expect(400);
+      // Verify only one record exists
+      const rates = await dataSource.getRepository(FxRateEntity).find();
 
-        // Empty FXQL string
-        await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: '' })
-          .expect(400);
+      expect(rates).toHaveLength(1);
+      expect(rates[0]).toMatchObject({
+        buyPrice: 0.87,
+        sellPrice: 0.92,
+        capAmount: 12000,
+      });
+    });
 
-        // Invalid currency
-        await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({
-            FXQL: `
+    it('should handle validation errors', async () => {
+      // Missing FXQL field
+      await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({})
+        .expect(400);
+
+      // Empty FXQL string
+      await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: '' })
+        .expect(400);
+
+      // Invalid currency
+      await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({
+          FXQL: `
               USD-XXX {
                 BUY 0.85
                 SELL 0.90
                 CAP 10000
               }
-            `
-          })
-          .expect(400);
-      });
+            `,
+        })
+        .expect(400);
+    });
 
-      it('should handle rate limiting', async () => {
-        const fxql = `
+    it('should handle rate limiting', async () => {
+      const fxql = `
           USD-EUR {
             BUY 0.85
             SELL 0.90
@@ -245,21 +250,23 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        // Make multiple rapid requests
-        const requests = Array(11).fill(null).map(() => 
+      // Make multiple rapid requests
+      const requests = Array(11)
+        .fill(null)
+        .map(() =>
           request(app.getHttpServer())
             .post('/fxql-statements')
-            .send({ FXQL: fxql })
+            .send({ FXQL: fxql }),
         );
 
-        const results = await Promise.all(requests);
-        
-        // At least one request should be rate limited
-        expect(results.some(result => result.status === 429)).toBeTruthy();
-      });
+      const results = await Promise.all(requests);
 
-      it('should handle syntax errors', async () => {
-        const invalidFxql = `
+      // At least one request should be rate limited
+      expect(results.some((result) => result.status === 429)).toBeTruthy();
+    });
+
+    it('should handle syntax errors', async () => {
+      const invalidFxql = `
           USD-EUR {
             BUY 0.85
             SELL
@@ -267,35 +274,35 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        const response = await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: invalidFxql })
-          .expect(400);
+      const response = await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: invalidFxql })
+        .expect(400);
 
-        expect(response.body.message).toMatch(/Invalid syntax/i);
-      });
+      expect(response.body.message).toMatch(/Invalid syntax/i);
+    });
 
-      it('should handle maximum length restriction', async () => {
-        // Generate a very long FXQL string
-        const template = `
+    it('should handle maximum length restriction', async () => {
+      // Generate a very long FXQL string
+      const template = `
           USD-EUR {
             BUY 0.85
             SELL 0.90
             CAP 10000
           }
         `;
-        const longFxql = Array(1000).fill(template).join('\n');
+      const longFxql = Array(1000).fill(template).join('\n');
 
-        const response = await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: longFxql })
-          .expect(400);
+      const response = await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: longFxql })
+        .expect(400);
 
-        expect(response.body.message).toMatch(/length/i);
-      });
+      expect(response.body.message).toMatch(/length/i);
+    });
 
-      it('should preserve precision of decimal numbers', async () => {
-        const fxql = `
+    it('should preserve precision of decimal numbers', async () => {
+      const fxql = `
           USD-EUR {
             BUY 0.85123
             SELL 0.90456
@@ -303,17 +310,17 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        const response = await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: fxql })
-          .expect(201);
+      const response = await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: fxql })
+        .expect(201);
 
-        expect(response.body[0].BuyPrice).toBe(0.85123);
-        expect(response.body[0].SellPrice).toBe(0.90456);
-      });
+      expect(response.body[0].BuyPrice).toBe(0.85123);
+      expect(response.body[0].SellPrice).toBe(0.90456);
+    });
 
-      it('should handle multiple currency pairs with same source currency', async () => {
-        const fxql = `
+    it('should handle multiple currency pairs with same source currency', async () => {
+      const fxql = `
           USD-EUR {
             BUY 0.85
             SELL 0.90
@@ -327,13 +334,15 @@ describe('FxqlController (e2e)', () => {
           }
         `;
 
-        const response = await request(app.getHttpServer())
-          .post('/fxql-statements')
-          .send({ FXQL: fxql })
-          .expect(201);
+      const response = await request(app.getHttpServer())
+        .post('/fxql-statements')
+        .send({ FXQL: fxql })
+        .expect(201);
 
-        expect(response.body).toHaveLength(2);
-        expect(response.body.filter(rate => rate.SourceCurrency === 'USD')).toHaveLength(2);
-      });
+      expect(response.body).toHaveLength(2);
+      expect(
+        response.body.filter((rate) => rate.SourceCurrency === 'USD'),
+      ).toHaveLength(2);
     });
   });
+});

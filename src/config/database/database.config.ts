@@ -28,7 +28,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       },
       cache: {
         type: 'ioredis',
-        duration: 60000, 
+        duration: 60000,
         ignoreErrors: true,
       },
     };

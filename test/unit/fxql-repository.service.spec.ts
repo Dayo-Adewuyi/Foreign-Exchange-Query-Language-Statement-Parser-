@@ -9,14 +9,14 @@ describe('FxRateRepository Unit test', () => {
 
   const mockDataSource = {
     createEntityManager: jest.fn(),
-    transaction: jest.fn()
+    transaction: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FxRateRepository,
-        { provide: DataSource, useValue: mockDataSource }
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -30,8 +30,8 @@ describe('FxRateRepository Unit test', () => {
       SourceCurrency: 'USD',
       DestinationCurrency: 'GBP',
       BuyPrice: 0.85,
-      SellPrice: 0.90,
-      CapAmount: 10000
+      SellPrice: 0.9,
+      CapAmount: 10000,
     };
 
     it('creates new rate if not exists', async () => {
@@ -41,22 +41,28 @@ describe('FxRateRepository Unit test', () => {
         destinationCurrency: testRate.DestinationCurrency,
         buyPrice: testRate.BuyPrice,
         sellPrice: testRate.SellPrice,
-        capAmount: testRate.CapAmount
+        capAmount: testRate.CapAmount,
       };
 
       const mockManager = {
-        findOne: jest.fn()
-          .mockResolvedValueOnce(null)  
-          .mockResolvedValueOnce(savedEntity),  
+        findOne: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(savedEntity),
         create: jest.fn().mockReturnValue(savedEntity),
-        save: jest.fn().mockResolvedValue(savedEntity)
+        save: jest.fn().mockResolvedValue(savedEntity),
       };
 
-      mockDataSource.transaction.mockImplementationOnce((cb) => cb(mockManager));
+      mockDataSource.transaction.mockImplementationOnce((cb) =>
+        cb(mockManager),
+      );
 
       const result = await repository.bulkCreate([testRate]);
       expect(result).toHaveLength(1);
-      expect(mockManager.create).toHaveBeenCalledWith(FxRateEntity, expect.any(Object));
+      expect(mockManager.create).toHaveBeenCalledWith(
+        FxRateEntity,
+        expect.any(Object),
+      );
       expect(mockManager.save).toHaveBeenCalled();
       expect(result[0].BuyPrice).toBe(testRate.BuyPrice);
     });
@@ -66,33 +72,34 @@ describe('FxRateRepository Unit test', () => {
         id: '1',
         sourceCurrency: 'USD',
         destinationCurrency: 'GBP',
-        buyPrice: 0.80,
+        buyPrice: 0.8,
         sellPrice: 0.85,
-        capAmount: 8000
+        capAmount: 8000,
       };
 
       const updatedRate = {
         ...existingRate,
         buyPrice: testRate.BuyPrice,
         sellPrice: testRate.SellPrice,
-        capAmount: testRate.CapAmount
+        capAmount: testRate.CapAmount,
       };
 
       const mockManager = {
-        findOne: jest.fn()
-          .mockResolvedValueOnce(existingRate)  
-          .mockResolvedValueOnce(updatedRate),  
-        save: jest.fn().mockResolvedValue(updatedRate)
+        findOne: jest
+          .fn()
+          .mockResolvedValueOnce(existingRate)
+          .mockResolvedValueOnce(updatedRate),
+        save: jest.fn().mockResolvedValue(updatedRate),
       };
 
-      mockDataSource.transaction.mockImplementationOnce((cb) => cb(mockManager));
+      mockDataSource.transaction.mockImplementationOnce((cb) =>
+        cb(mockManager),
+      );
 
       const result = await repository.bulkCreate([testRate]);
       expect(result).toHaveLength(1);
       expect(mockManager.save).toHaveBeenCalled();
       expect(result[0].BuyPrice).toBe(testRate.BuyPrice);
     });
-
-
   });
 });

@@ -7,8 +7,8 @@ export class RateLimiterGuard implements CanActivate {
 
   constructor() {
     this.rateLimiter = new RateLimiterMemory({
-      points: 100, 
-      duration: 60, 
+      points: 100,
+      duration: 60,
     });
   }
 
