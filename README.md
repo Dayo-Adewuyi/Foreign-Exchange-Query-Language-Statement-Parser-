@@ -74,7 +74,7 @@ npm run start:dev
 ### Quick Start with Docker
 
 ```bash
-curl -O https://raw.githubusercontent.com/yourusername/fxql-parser/main/setup.sh
+curl -O https://raw.githubusercontent.com/dayo-adewuyi/Foreign-Exchange-Query-Language-Statement-Parser-/main/setup.sh
 chmod +x setup.sh
 ./setup.sh
 ```

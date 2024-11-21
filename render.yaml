@@ -1,0 +1,46 @@
+# render.yaml
+services:
+  - type: web
+    name: fxql-parser
+    env: node
+    region: frankfurt  
+    plan: starter  
+    branch: main
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: node dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        fromDatabase:
+          name: fxql-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: fxql-db
+          property: port
+      - key: DB_USERNAME
+        fromDatabase:
+          name: fxql-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: fxql-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: fxql-db
+          property: database
+      - key: RATE_LIMIT_WINDOW
+        value: "15"
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+    autoDeploy: true
+
+databases:
+  - name: fxql-db
+    plan: starter
+    postgresMajorVersion: 15
