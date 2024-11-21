@@ -11,7 +11,6 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
     const dbConfig = this.configService.get('app.database');
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-    // Create Redis client with error handling
     const redis = new Redis(redisUrl, {
       retryStrategy(times) {
         if (times > 3) {
@@ -23,7 +22,6 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       maxRetriesPerRequest: 3,
     });
 
-    // Handle Redis errors
     redis.on('error', (error) => {
       console.warn('Redis error, disabling cache:', error.message);
       redis.disconnect();
